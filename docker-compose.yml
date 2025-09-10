@@ -1,27 +1,25 @@
+version: '3.8'
+
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0.7
+    image: quay.io/keycloak/keycloak:23.0
     container_name: keycloak
-    env_file:
-      - keycloak.env
-    volumes:
-      - ./drivers:/opt/keycloak/providers
     environment:
       # Keycloak configuration
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
       
       # Database configuration
       KC_DB: mssql
-      KC_DB_URL: jdbc:sqlserver://${DB_SERVER:-52.156.112.164}:${DB_PORT:-1433};databaseName=${DB_NAME:-kcloak};encrypt=true;trustServerCertificate=true;loginTimeout=30
-      KC_DB_USERNAME: ${DB_USERNAME:-sa}
-      KC_DB_PASSWORD: ${DB_PASSWORD:-D3v@123}
+      KC_DB_URL: jdbc:sqlserver://52.156.112.164:1433;databaseName=kcloak;encrypt=true;trustServerCertificate=true
+      KC_DB_USERNAME: sa
+      KC_DB_PASSWORD: D3v@123
       
       # Hostname configuration
-      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
-      KC_HOSTNAME_PORT: ${KEYCLOAK_PORT:-8080}
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
       
-      # Proxy configuration (if behind reverse proxy)
+      # Proxy configuration (for development)
       KC_PROXY: edge
       
       # Health check
@@ -33,14 +31,10 @@ services:
       
     ports:
       - "8080:8080"
-      - "8443:8443"
-    
     command: start-dev
-    
     restart: unless-stopped
-    
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -48,7 +42,7 @@ services:
 
   # Optional: MSSQL client for testing connection
   mssql-client:
-    image: mcr.microsoft.com/mssql-tools:latest
+    image: mcr.microsoft.com/mssql-tools
     container_name: mssql-client
     environment:
       ACCEPT_EULA: Y
