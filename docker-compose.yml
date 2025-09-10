@@ -1,0 +1,59 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: keycloak
+    env_file:
+      - keycloak.env
+    volumes:
+      - ./drivers:/opt/keycloak/providers
+    environment:
+      # Keycloak configuration
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      
+      # Database configuration
+      KC_DB: mssql
+      KC_DB_URL: jdbc:sqlserver://${DB_SERVER:-52.156.112.164}:${DB_PORT:-1433};databaseName=${DB_NAME:-kcloak};encrypt=true;trustServerCertificate=true;loginTimeout=30
+      KC_DB_USERNAME: ${DB_USERNAME:-sa}
+      KC_DB_PASSWORD: ${DB_PASSWORD:-D3v@123}
+      
+      # Hostname configuration
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: ${KEYCLOAK_PORT:-8080}
+      
+      # Proxy configuration (if behind reverse proxy)
+      KC_PROXY: edge
+      
+      # Health check
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      
+      # Logging
+      KC_LOG_LEVEL: INFO
+      
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    
+    command: start-dev
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Optional: MSSQL client for testing connection
+  mssql-client:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: mssql-client
+    environment:
+      ACCEPT_EULA: Y
+    command: /bin/bash -c "while true; do sleep 30; done"
+    depends_on:
+      - keycloak
+    profiles:
+      - tools
