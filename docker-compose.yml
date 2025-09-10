@@ -7,7 +7,7 @@ services:
     environment:
       # Keycloak configuration
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KEYCLOAK_ADMIN_PASSWORD: Nafees012
       
       # Database configuration
       KC_DB: mssql
