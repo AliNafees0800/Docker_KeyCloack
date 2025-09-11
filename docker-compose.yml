@@ -11,9 +11,20 @@ services:
       
       # Database configuration
       KC_DB: mssql
-      KC_DB_URL: jdbc:sqlserver://52.156.112.164:1433;databaseName=kcloak;encrypt=true;trustServerCertificate=true
+      KC_DB_URL: jdbc:sqlserver://52.156.112.164:1433;databaseName=kcloak;encrypt=true;trustServerCertificate=true;loginTimeout=60;connectRetryCount=5;connectRetryInterval=10;responseBuffering=adaptive;sendStringParametersAsUnicode=false;selectMethod=cursor;sendTimeAsDatetime=false;integratedSecurity=false;authenticationScheme=NativeAuthentication;xopenStates=false;enablePrepareOnFirstPreparedStatementCall=false;cancelQueryTimeout=-1;sslProtocol=TLS;hostNameInCertificate=*
       KC_DB_USERNAME: sa
       KC_DB_PASSWORD: D3v@123
+      
+      # Database connection pool settings
+      KC_DB_POOL_INITIAL_SIZE: 5
+      KC_DB_POOL_MIN_SIZE: 5
+      KC_DB_POOL_MAX_SIZE: 20
+      KC_DB_POOL_MAX_LIFETIME: 1800000
+      
+      # Disable XA transactions for remote database
+      QUARKUS_DATASOURCE_JDBC_ENABLE_MUTUAL_TLS: false
+      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: false
+      QUARKUS_DATASOURCE_JDBC_XA_ENABLED: false
       
       # Hostname configuration
       KC_HOSTNAME: localhost
