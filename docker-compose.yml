@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Keycloak
+  keycloak:
+    image: docker.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    environment:
+      # Keycloak configuration
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: Nafees012
+      
+      # Database configuration - local SQL Server
+      KC_DB: mssql
+      KC_DB_URL: jdbc:sqlserver://10.155.56.167:1433;databaseName=keycloak;encrypt=true;trustServerCertificate=true
+      KC_DB_USERNAME: sa
+      KC_DB_PASSWORD: 123
+      
+      # Hostname configuration
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      
+      # Proxy configuration
+      KC_PROXY: edge
+      
+      # Health check
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      
+    ports:
+      - "8080:8080"
+    command: start-dev
+    restart: unless-stopped
