@@ -54,22 +54,11 @@ namespace WebApplication2.Services
                     };
                 }
 
-                // Try to exchange code for token to validate with Keycloak
-                var tokenResponse = await ExchangeCodeForTokenAsync(callbackData);
-                if (tokenResponse != null)
-                {
-                    return new ValidationResult
-                    {
-                        IsValid = true,
-                        Message = "Callback validation successful",
-                        TokenData = tokenResponse
-                    };
-                }
-
+                // Basic validation passed - don't exchange token here to avoid using code twice
                 return new ValidationResult
                 {
-                    IsValid = false,
-                    Message = "Failed to validate with Keycloak server"
+                    IsValid = true,
+                    Message = "Callback validation successful - ready for token exchange"
                 };
             }
             catch (Exception ex)
@@ -99,12 +88,45 @@ namespace WebApplication2.Services
                 };
 
                 var formContent = new FormUrlEncodedContent(tokenRequest);
+                
+                // Log the request for debugging
+                _logger.LogInformation("Exchanging code for token - URL: {TokenUrl}, ClientId: {ClientId}, RedirectUri: {RedirectUri}", 
+                    tokenUrl, _keycloakConfig.ClientId, _keycloakConfig.RedirectUri);
+                
                 var response = await _httpClient.PostAsync(tokenUrl, formContent);
+
+                // Log ALL response details for debugging
+                _logger.LogInformation("=== KEYCLOAK RESPONSE DEBUG ===");
+                _logger.LogInformation("Status Code: {StatusCode}", response.StatusCode);
+                _logger.LogInformation("Reason Phrase: {ReasonPhrase}", response.ReasonPhrase);
+                _logger.LogInformation("Is Success: {IsSuccess}", response.IsSuccessStatusCode);
+                _logger.LogInformation("Version: {Version}", response.Version);
+                
+                // Log all response headers
+                _logger.LogInformation("Response Headers:");
+                foreach (var header in response.Headers)
+                {
+                    _logger.LogInformation("  {HeaderName}: {HeaderValue}", header.Key, string.Join(", ", header.Value));
+                }
+                
+                // Log content headers
+                _logger.LogInformation("Content Headers:");
+                foreach (var header in response.Content.Headers)
+                {
+                    _logger.LogInformation("  {HeaderName}: {HeaderValue}", header.Key, string.Join(", ", header.Value));
+                }
+
+                // Always read and log the response body first
+                var responseBody = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("=== RESPONSE BODY ===");
+                _logger.LogInformation("Response Body: {ResponseBody}", responseBody);
+                _logger.LogInformation("=== END RESPONSE BODY ===");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonContent = await response.Content.ReadAsStringAsync();
-                    var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonContent, new JsonSerializerOptions
+                    _logger.LogInformation("Success Response Body: {ResponseBody}", responseBody);
+                    
+                    var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(responseBody, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
@@ -114,9 +136,31 @@ namespace WebApplication2.Services
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("Failed to exchange code for token. Status: {StatusCode}, Error: {Error}", 
-                        response.StatusCode, errorContent);
+                    _logger.LogError("=== KEYCLOAK ERROR RESPONSE ===");
+                    _logger.LogError("Status Code: {StatusCode}", response.StatusCode);
+                    _logger.LogError("Reason Phrase: {ReasonPhrase}", response.ReasonPhrase);
+                    _logger.LogError("Error Response Body: {ErrorBody}", responseBody);
+                    
+                    // Log the request details for debugging
+                    _logger.LogError("=== REQUEST DETAILS ===");
+                    _logger.LogError("Token URL: {TokenUrl}", tokenUrl);
+                    _logger.LogError("Client ID: {ClientId}", _keycloakConfig.ClientId);
+                    _logger.LogError("Redirect URI: {RedirectUri}", _keycloakConfig.RedirectUri);
+                    _logger.LogError("Authorization Code: {Code}", callbackData.Code);
+                    
+                    // Log the exact form data being sent
+                    var formData = string.Join("&", tokenRequest.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                    _logger.LogError("Form Data Sent: {FormData}", formData);
+                    
+                    // Log each individual parameter
+                    _logger.LogError("Individual Parameters:");
+                    foreach (var param in tokenRequest)
+                    {
+                        _logger.LogError("  {Key} = {Value}", param.Key, param.Value);
+                    }
+                    
+                    _logger.LogError("=== END DEBUG INFO ===");
+                    
                     return null;
                 }
             }

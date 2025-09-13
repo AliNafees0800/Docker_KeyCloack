@@ -167,6 +167,29 @@ namespace WebApplication2.Controllers
                 return StatusCode(500, new { message = "Internal server error during session state validation" });
             }
         }
+
+        [HttpGet("debug-config")]
+        public IActionResult GetDebugConfig()
+        {
+            try
+            {
+                var config = new
+                {
+                    BaseUrl = "http://localhost:8080",
+                    Realm = "Okta-Broker",
+                    ClientId = "okta-client",
+                    RedirectUri = "http://localhost:3000/callback",
+                    TokenUrl = "http://localhost:8080/realms/Okta-Broker/protocol/openid-connect/token"
+                };
+                
+                return Ok(config);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting debug config");
+                return StatusCode(500, new { message = "Error getting debug config" });
+            }
+        }
     }
 
     public class TokenValidationRequest
