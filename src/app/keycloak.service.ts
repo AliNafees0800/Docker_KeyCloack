@@ -18,7 +18,7 @@ export interface ValidationResult {
   providedIn: 'root'
 })
 export class KeycloakService {
-  private baseUrl = 'http://localhost:8080'; // Adjust this to your backend API URL
+  private baseUrl = 'http://localhost:7093'; // Adjust this to your backend API URL
 
   constructor(private http: HttpClient) {}
 
