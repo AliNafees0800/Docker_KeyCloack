@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebApplication2.Models;
 using WebApplication2.Services;
+using System.Text.Json.Serialization;
 
 namespace WebApplication2.Controllers
 {
@@ -194,12 +195,16 @@ namespace WebApplication2.Controllers
 
     public class TokenValidationRequest
     {
+        [JsonPropertyName("access_token")]
         public string AccessToken { get; set; } = string.Empty;
     }
 
     public class SessionStateValidationRequest
     {
+        [JsonPropertyName("session_state")]
         public string SessionState { get; set; } = string.Empty;
+        
+        [JsonPropertyName("code")]
         public string Code { get; set; } = string.Empty;
     }
 }

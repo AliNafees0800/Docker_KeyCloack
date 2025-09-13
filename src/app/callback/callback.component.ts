@@ -18,13 +18,13 @@ import { KeycloakService, KeycloakCallbackData, ValidationResult } from '../keyc
       <div *ngIf="!loading">
         <div *ngIf="callbackData" class="param-list">
           <h3>Received Parameters:</h3>
-          <div class="param-item"><strong>Session State:</strong> {{ callbackData.SessionState }}</div>
-          <div class="param-item"><strong>Issuer:</strong> {{ callbackData.Iss }}</div>
-          <div class="param-item"><strong>Code:</strong> {{ callbackData.Code }}</div>
+          <div class="param-item"><strong>Session State:</strong> {{ callbackData.session_state }}</div>
+          <div class="param-item"><strong>Issuer:</strong> {{ callbackData.iss }}</div>
+          <div class="param-item"><strong>Code:</strong> {{ callbackData.code }}</div>
         </div>
 
-        <div *ngIf="validationResult" class="status" [ngClass]="validationResult.IsValid ? 'success' : 'error'">
-          <strong>Validation Result:</strong> {{ validationResult.Message }}
+        <div *ngIf="validationResult" class="status" [ngClass]="validationResult.is_valid ? 'success' : 'error'">
+          <strong>Validation Result:</strong> {{ validationResult.message }}
         </div>
 
         <div *ngIf="parsedIssuer" class="param-list">
@@ -39,19 +39,21 @@ import { KeycloakService, KeycloakCallbackData, ValidationResult } from '../keyc
 
         <div *ngIf="tokenData" class="param-list">
           <h3>Token Information:</h3>
-          <div class="param-item"><strong>Access Token:</strong> {{ tokenData.AccessToken ? 'Received' : 'Not available' }}</div>
-          <div class="param-item"><strong>Token Type:</strong> {{ tokenData.TokenType }}</div>
-          <div class="param-item"><strong>Expires In:</strong> {{ tokenData.ExpiresIn }} seconds</div>
+          <div class="param-item"><strong>Access Token:</strong> {{ tokenData.access_token ? 'Received' : 'Not available' }}</div>
+          <div class="param-item"><strong>Token Type:</strong> {{ tokenData.token_type }}</div>
+          <div class="param-item"><strong>Expires In:</strong> {{ tokenData.expires_in }} seconds</div>
+          <div class="param-item"><strong>Scope:</strong> {{ tokenData.scope }}</div>
+          <div class="param-item"><strong>Session State:</strong> {{ tokenData.session_state }}</div>
         </div>
 
         <div *ngIf="userInfo" class="param-list">
           <h3>User Information:</h3>
-          <div class="param-item"><strong>Subject:</strong> {{ userInfo.Sub }}</div>
-          <div class="param-item"><strong>Name:</strong> {{ userInfo.Name }}</div>
-          <div class="param-item"><strong>Email:</strong> {{ userInfo.Email }}</div>
-          <div class="param-item"><strong>Username:</strong> {{ userInfo.PreferredUsername }}</div>
-          <div class="param-item"><strong>Email Verified:</strong> {{ userInfo.EmailVerified ? 'Yes' : 'No' }}</div>
-          <div class="param-item"><strong>Roles:</strong> {{ userInfo.Roles?.join(', ') || 'None' }}</div>
+          <div class="param-item"><strong>Subject:</strong> {{ userInfo.sub }}</div>
+          <div class="param-item"><strong>Name:</strong> {{ userInfo.name }}</div>
+          <div class="param-item"><strong>Email:</strong> {{ userInfo.email }}</div>
+          <div class="param-item"><strong>Username:</strong> {{ userInfo.preferred_username }}</div>
+          <div class="param-item"><strong>Email Verified:</strong> {{ userInfo.email_verified ? 'Yes' : 'No' }}</div>
+          <div class="param-item"><strong>Roles:</strong> {{ userInfo.roles?.join(', ') || 'None' }}</div>
         </div>
 
         <div class="actions">
@@ -61,10 +63,10 @@ import { KeycloakService, KeycloakCallbackData, ValidationResult } from '../keyc
           <button (click)="exchangeCodeForToken()" [disabled]="!callbackData || exchanging">
             {{ exchanging ? 'Exchanging...' : 'Exchange Code for Token' }}
           </button>
-          <button (click)="validateToken()" [disabled]="!tokenData?.AccessToken || validatingToken">
+          <button (click)="validateToken()" [disabled]="!tokenData?.access_token || validatingToken">
             {{ validatingToken ? 'Validating Token...' : 'Validate Token' }}
           </button>
-          <button (click)="getUserInfo()" [disabled]="!tokenData?.AccessToken || gettingUserInfo">
+          <button (click)="getUserInfo()" [disabled]="!tokenData?.access_token || gettingUserInfo">
             {{ gettingUserInfo ? 'Getting User Info...' : 'Get User Info' }}
           </button>
           <button (click)="validateSessionState()" [disabled]="!callbackData || validatingSession">
@@ -109,9 +111,9 @@ export class CallbackComponent implements OnInit {
 
       if (sessionState && iss && code) {
         this.callbackData = {
-          SessionState: sessionState,
-          Iss: iss,
-          Code: code
+          session_state: sessionState,
+          iss: iss,
+          code: code
         };
 
         // Parse issuer information
@@ -120,8 +122,8 @@ export class CallbackComponent implements OnInit {
         // Basic validation
         const isValid = sessionState && code && sessionState.length > 0 && code.length > 0;
         this.validationResult = {
-          IsValid: isValid,
-          Message: isValid ? 'Basic validation passed' : 'Invalid session state or code'
+          is_valid: isValid,
+          message: isValid ? 'Basic validation passed' : 'Invalid session state or code'
         };
 
         this.loading = false;
@@ -169,16 +171,16 @@ export class CallbackComponent implements OnInit {
   }
 
   validateToken() {
-    if (!this.tokenData?.AccessToken) return;
+    if (!this.tokenData?.access_token) return;
 
     this.validatingToken = true;
     this.error = null;
 
-    this.keycloakService.validateToken(this.tokenData.AccessToken).subscribe({
+    this.keycloakService.validateToken(this.tokenData.access_token).subscribe({
       next: (result) => {
         this.validationResult = {
-          IsValid: result.isValid,
-          Message: result.isValid ? 'Token is valid' : 'Token is invalid'
+          is_valid: result.is_valid,
+          message: result.is_valid ? 'Token is valid' : 'Token is invalid'
         };
         this.validatingToken = false;
       },
@@ -190,12 +192,12 @@ export class CallbackComponent implements OnInit {
   }
 
   getUserInfo() {
-    if (!this.tokenData?.AccessToken) return;
+    if (!this.tokenData?.access_token) return;
 
     this.gettingUserInfo = true;
     this.error = null;
 
-    this.keycloakService.getUserInfo(this.tokenData.AccessToken).subscribe({
+    this.keycloakService.getUserInfo(this.tokenData.access_token).subscribe({
       next: (result) => {
         this.userInfo = result;
         this.gettingUserInfo = false;
@@ -213,7 +215,7 @@ export class CallbackComponent implements OnInit {
     this.validatingSession = true;
     this.error = null;
 
-    this.keycloakService.validateSessionState(this.callbackData.SessionState, this.callbackData.Code).subscribe({
+    this.keycloakService.validateSessionState(this.callbackData.session_state, this.callbackData.code).subscribe({
       next: (result) => {
         this.validationResult = result;
         this.validatingSession = false;

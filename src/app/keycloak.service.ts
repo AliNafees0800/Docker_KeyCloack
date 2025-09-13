@@ -3,41 +3,44 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface KeycloakCallbackData {
-  SessionState: string;
-  Iss: string;
-  Code: string;
+  session_state: string;
+  iss: string;
+  code: string;
 }
 
 export interface ValidationResult {
-  IsValid: boolean;
-  Message: string;
-  TokenData?: any;
+  is_valid: boolean;
+  message: string;
+  token_data?: any;
 }
 
 export interface TokenResponse {
-  AccessToken: string;
-  TokenType: string;
-  ExpiresIn: number;
-  RefreshToken: string;
-  Scope: string;
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token: string;
+  scope: string;
+  id_token?: string;
+  session_state?: string;
+  'not-before-policy'?: number;
 }
 
 export interface TokenValidationRequest {
-  AccessToken: string;
+  access_token: string;
 }
 
 export interface SessionStateValidationRequest {
-  SessionState: string;
-  Code: string;
+  session_state: string;
+  code: string;
 }
 
 export interface KeycloakUserInfo {
-  Sub: string;
-  Name: string;
-  Email: string;
-  PreferredUsername: string;
-  EmailVerified: boolean;
-  Roles: string[];
+  sub: string;
+  name: string;
+  email: string;
+  preferred_username: string;
+  email_verified: boolean;
+  roles: string[];
 }
 
 @Injectable({
@@ -64,13 +67,13 @@ export class KeycloakService {
     return this.http.post<TokenResponse>(`${this.baseUrl}/api/exchange-code-for-token`, data, { headers });
   }
 
-  validateToken(accessToken: string): Observable<{isValid: boolean}> {
+  validateToken(accessToken: string): Observable<{is_valid: boolean}> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    const request: TokenValidationRequest = { AccessToken: accessToken };
-    return this.http.post<{isValid: boolean}>(`${this.baseUrl}/api/validate-token`, request, { headers });
+    const request: TokenValidationRequest = { access_token: accessToken };
+    return this.http.post<{is_valid: boolean}>(`${this.baseUrl}/api/validate-token`, request, { headers });
   }
 
   getUserInfo(accessToken: string): Observable<KeycloakUserInfo> {
@@ -82,7 +85,7 @@ export class KeycloakService {
       'Content-Type': 'application/json'
     });
 
-    const request: SessionStateValidationRequest = { SessionState: sessionState, Code: code };
+    const request: SessionStateValidationRequest = { session_state: sessionState, code: code };
     return this.http.post<ValidationResult>(`${this.baseUrl}/api/validate-session-state`, request, { headers });
   }
 
