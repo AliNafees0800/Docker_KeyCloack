@@ -3,22 +3,48 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface KeycloakCallbackData {
-  session_state: string;
-  iss: string;
-  code: string;
+  SessionState: string;
+  Iss: string;
+  Code: string;
 }
 
 export interface ValidationResult {
-  isValid: boolean;
-  message: string;
-  tokenData?: any;
+  IsValid: boolean;
+  Message: string;
+  TokenData?: any;
+}
+
+export interface TokenResponse {
+  AccessToken: string;
+  TokenType: string;
+  ExpiresIn: number;
+  RefreshToken: string;
+  Scope: string;
+}
+
+export interface TokenValidationRequest {
+  AccessToken: string;
+}
+
+export interface SessionStateValidationRequest {
+  SessionState: string;
+  Code: string;
+}
+
+export interface KeycloakUserInfo {
+  Sub: string;
+  Name: string;
+  Email: string;
+  PreferredUsername: string;
+  EmailVerified: boolean;
+  Roles: string[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class KeycloakService {
-  private baseUrl = 'http://localhost:7093'; // Adjust this to your backend API URL
+  private baseUrl = 'https://localhost:7093'; // Adjust this to your backend API URL
 
   constructor(private http: HttpClient) {}
 
@@ -30,23 +56,34 @@ export class KeycloakService {
     return this.http.post<ValidationResult>(`${this.baseUrl}/api/validate-keycloak-callback`, data, { headers });
   }
 
-  exchangeCodeForToken(data: KeycloakCallbackData): Observable<any> {
+  exchangeCodeForToken(data: KeycloakCallbackData): Observable<TokenResponse> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Content-Type': 'application/json'
     });
 
-    const body = new URLSearchParams();
-    body.set('grant_type', 'authorization_code');
-    body.set('client_id', 'your-client-id'); // Replace with your actual client ID
-    body.set('code', data.code);
-    body.set('redirect_uri', 'http://localhost:3000/callback');
-
-    return this.http.post(`${this.baseUrl}/realms/Okta-Broker/protocol/openid-connect/token`, body.toString(), { headers });
+    return this.http.post<TokenResponse>(`${this.baseUrl}/api/exchange-code-for-token`, data, { headers });
   }
 
-  validateSessionState(sessionState: string, code: string): boolean {
-    // Basic validation - in a real app, you'd want more sophisticated validation
-    return Boolean(sessionState && code && sessionState.length > 0 && code.length > 0);
+  validateToken(accessToken: string): Observable<{isValid: boolean}> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    const request: TokenValidationRequest = { AccessToken: accessToken };
+    return this.http.post<{isValid: boolean}>(`${this.baseUrl}/api/validate-token`, request, { headers });
+  }
+
+  getUserInfo(accessToken: string): Observable<KeycloakUserInfo> {
+    return this.http.get<KeycloakUserInfo>(`${this.baseUrl}/api/user-info?accessToken=${encodeURIComponent(accessToken)}`);
+  }
+
+  validateSessionState(sessionState: string, code: string): Observable<ValidationResult> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    const request: SessionStateValidationRequest = { SessionState: sessionState, Code: code };
+    return this.http.post<ValidationResult>(`${this.baseUrl}/api/validate-session-state`, request, { headers });
   }
 
   parseIssuer(iss: string): { realm: string; baseUrl: string } | null {

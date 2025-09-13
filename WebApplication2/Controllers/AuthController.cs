@@ -5,7 +5,7 @@ using WebApplication2.Services;
 namespace WebApplication2.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api")]
     public class AuthController : ControllerBase
     {
         private readonly IKeycloakService _keycloakService;
