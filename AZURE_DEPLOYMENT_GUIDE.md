@@ -207,9 +207,39 @@ If your Web App can't connect to the database:
 1. Go to your **Web App** → **"Overview"**
 2. Copy the **URL** (e.g., `https://keycloak-app-12345.azurewebsites.net`)
 3. Open this URL in your browser
-4. You should see the Keycloak welcome page
-5. Click **"Administration Console"**
-6. Login with:
+
+**If you see a "Dangerous site" warning in Chrome:**
+
+This is a Chrome security warning, not a Keycloak error. Here's how to handle it:
+
+**Option A: Bypass the warning to see what Keycloak shows**
+1. Click **"Details"** or **"Advanced"** on the warning page
+2. Click **"Proceed to [your-site] (unsafe)"** or **"Visit this site"**
+3. This will let you see what Keycloak is actually displaying
+
+**Option B: Use a different browser temporarily**
+- Try Microsoft Edge or Firefox
+- They may not show the same warning
+
+**Option C: Fix the security warning (Recommended)**
+- The warning appears because Chrome's Safe Browsing flagged the site
+- This can happen with new Azure Web Apps before they're fully indexed
+- After configuring the database and the site is working, the warning usually goes away
+- You can also add a custom domain with proper SSL certificate (see Post-Deployment section)
+
+**What you should see:**
+
+**Without database configured:**
+- Keycloak container should start and show an error page
+- Error might say: "Database connection failed" or "Unable to connect to database"
+- This confirms the container is running, but needs database connection
+
+**With database configured:**
+- Keycloak welcome page with "Administration Console" link
+- You can login and use Keycloak normally
+
+4. If you see the Keycloak welcome page, click **"Administration Console"**
+5. Login with:
    - **Username**: `admin`
    - **Password**: The password you set in `KEYCLOAK_ADMIN_PASSWORD`
 
@@ -254,15 +284,25 @@ If your Web App can't connect to the database:
 
 ### Troubleshooting
 
+- **Chrome shows "Dangerous site" warning**:
+  - This is a Chrome Safe Browsing warning, not a Keycloak error
+  - **Quick fix**: Click "Details" → "Proceed to site (unsafe)" to see the actual page
+  - **Why it happens**: New Azure Web Apps sometimes get flagged before they're indexed
+  - **Permanent fix**: The warning usually disappears after a few days, or add a custom domain with SSL
+  - **Alternative**: Use Microsoft Edge or Firefox temporarily
+  - **Note**: The site is safe - it's your own Azure deployment
+
 - **Can't connect to database**: 
   - Check PostgreSQL firewall rules (Step 11)
   - Verify connection string format in environment variables
   - Check PostgreSQL server is running
+  - **Without database**: Keycloak will show an error page saying it can't connect to the database
 
 - **Container won't start**: 
   - Check **"Log stream"** for errors
   - Verify all environment variables are set correctly
   - Check **"Always On"** is enabled
+  - Look for container startup errors in logs
 
 - **Connection timeout**: 
   - Verify database credentials
@@ -274,12 +314,117 @@ If your Web App can't connect to the database:
   - Check port 8080 is correct
   - Verify container is running
 
+- **Site shows error page instead of Keycloak**:
+  - **Without database**: This is expected - Keycloak needs database connection
+  - Check logs to see the specific error
+  - Verify environment variables are set correctly
+  - Ensure database is created and accessible
+
 ### Cost Optimization
 
 - Use **Basic B1** tier for development/testing
 - Use **Standard S1** or higher for production
 - Consider **scaling down** during non-business hours
 - Monitor usage in **Cost Management + Billing**
+
+---
+
+## Troubleshooting: Deployment Errors
+
+### Error: "Could not find member 'tags' on object of type 'Subnet'"
+
+**Problem**: This error occurs when Azure tries to create the database through the Web App wizard. It's a known bug in the Azure portal related to subnet tag handling in the deployment template.
+
+**Why it happens**: When you select "Create a Database" in the wizard, Azure automatically creates a VNet and subnet. The deployment template tries to apply tags to the subnet, but subnets don't support tags in the way the template expects, causing the deployment to fail.
+
+**Solutions to try** (in order):
+
+#### Solution 1: Create Resource Group Without Tags
+1. **Create a new Resource Group first** (don't create it during Web App creation)
+   - Go to **Resource Groups** → **Create**
+   - **Name**: `keycloak-rg`
+   - **Region**: Your preferred region
+   - **Important**: Don't add any tags to the resource group
+2. **Then create Web App** using this existing resource group
+   - In the Basics tab, select the existing resource group (don't create new)
+   - Continue with database creation as normal
+
+#### Solution 2: Try Different Region
+Sometimes certain regions have updated templates that fix this bug:
+1. Try a different Azure region (e.g., if you used East US, try West US 2)
+2. Some regions may have newer deployment templates
+
+#### Solution 3: Wait and Retry
+1. Wait 15-30 minutes
+2. Try the deployment again
+3. Azure sometimes updates templates, and the issue may resolve
+
+#### Solution 4: Use Azure CLI or PowerShell (Bypass Portal Bug)
+If you're comfortable with command line, you can use Azure CLI to deploy, which uses different templates:
+
+```bash
+# This bypasses the portal bug entirely
+az webapp create --resource-group keycloak-rg --plan keycloak-plan --name keycloak-app --deployment-container-image-name quay.io/phasetwo/phasetwo-keycloak:latest
+```
+
+#### Solution 5: Report to Azure Support
+If none of the above work:
+1. This is a confirmed bug in Azure Portal
+2. Report it through Azure Support or Azure Feedback
+3. Use the workaround (create database separately) in the meantime
+
+**Recommended Workaround**: Create the database separately first, then create the Web App without the integrated database option. This is the most reliable approach and avoids the bug entirely.
+
+#### Alternative Approach: Create Database Separately
+
+**Step 1: Create PostgreSQL Database First**
+
+1. **Navigate to Azure Portal** → Search for **"Azure Database for PostgreSQL flexible servers"**
+2. Click **"Create"**
+3. Fill in **Basics** tab:
+   - **Subscription**: Select your subscription
+   - **Resource Group**: Create new (e.g., `keycloak-rg`) or use existing
+   - **Server name**: `keycloak-postgres-{your-unique-id}` (globally unique)
+   - **Region**: Choose your region
+   - **PostgreSQL version**: `15` or `16`
+   - **Workload type**: `Development`
+   - **Compute + storage**: 
+     - **Compute tier**: `Burstable` → `B1ms` (1 vCore, 2GB RAM)
+     - **Storage**: `32 GB`
+   - **Administrator account**:
+     - **Admin username**: `postgres`
+     - **Password**: Create a strong password (save this!)
+   - **Authentication method**: `PostgreSQL authentication only`
+
+4. Click **"Next: Networking"**
+   - **Network connectivity**: `Public access (allowed IP addresses)`
+   - **Firewall rules**: 
+     - Click **"Add current client IP address"**
+     - Click **"Add 0.0.0.0 - 0.0.0.0"** (to allow Azure services - you can restrict later)
+   - Click **"Save"**
+
+5. Click **"Next: Security"** → **"Review + create"** → **"Create"**
+6. Wait for deployment (5-10 minutes)
+
+7. **Create the database**:
+   - Go to your PostgreSQL server
+   - Navigate to **"Databases"** → Click **"+ Create"**
+   - **Database name**: `keycloak`
+   - Click **"Create"**
+
+**Step 2: Create Web App (Without Integrated Database)**
+
+1. **Navigate to Azure Portal** → Search for **"Web App for Containers"**
+2. Click **"Create"**
+3. Follow **Step 1** from the main guide (Basics tab)
+4. On **"Database"** tab: **DO NOT check "Create a Database"** ❌
+   - Leave it unchecked
+   - Click **"Next: Deployment"** (or **"Next: Container"**)
+5. Follow **Step 3** (Container configuration) from the main guide
+6. Continue with the rest of the steps
+7. After deployment, configure environment variables (Step 9) using the database you created separately
+
+**Note**: This approach avoids the subnet tags bug and gives you more control over the database configuration.
 
 ---
 
