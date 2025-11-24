@@ -63,10 +63,25 @@ You're now on the **"Container"** tab. Here's what to configure:
    - By default, "Quickstart" is selected (showing NGINX sample)
    - You MUST change this to **"Other container registries"** to use your Keycloak image
 
-3. After selecting "Other container registries", you'll see:
-   - **Image and tag***: Enter `quay.io/phasetwo/phasetwo-keycloak:latest`
-   - **Continuous Deployment**: `Enable` (optional, for auto-updates when image changes)
-   - **Access type**: `Public` (should be default)
+3. After selecting "Other container registries", you'll see **"Docker hub options"** section. Configure these fields:
+
+   - **Access Type**: Keep **"Public"** selected ✅
+   
+   - **Registry server URL***: Change from `https://index.docker.io` to:
+     ```
+     https://quay.io
+     ```
+     ⚠️ **IMPORTANT**: The Keycloak image is on Quay.io, not Docker Hub, so you must change this URL!
+   
+   - **Image and tag***: Enter:
+     ```
+     phasetwo/phasetwo-keycloak:latest
+     ```
+     (Note: Don't include `quay.io/` here, just the image path)
+   
+   - **Startup Command**: Leave **empty** (for production mode)
+     - If you need development mode, you can add: `start-dev`
+     - But for production, leave it empty to use the default `start` command
 
 4. Click **"Next: Networking"**
 
