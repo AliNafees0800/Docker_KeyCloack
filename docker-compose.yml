@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   phasetwo-sso:
     image: quay.io/phasetwo/phasetwo-keycloak:latest
@@ -9,12 +7,12 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       
-      # Database configuration for SQL Server (local)
-      KC_DB: mssql
-      KC_DB_URL: jdbc:sqlserver://host.docker.internal:1433;databaseName=keycloak;encrypt=false;trustServerCertificate=true
-      KC_DB_USERNAME: sa
+      # Database configuration for PostgreSQL (local)
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://host.docker.internal:5432/keycloak
+      KC_DB_USERNAME: postgres
       KC_DB_PASSWORD: 123
-      KC_DB_SCHEMA: dbo
+      KC_DB_SCHEMA: public
       
       # Hostname configuration
       KC_HOSTNAME_STRICT: false
@@ -28,7 +26,7 @@ services:
       KC_HEALTH_ENABLED: true
       KC_METRICS_ENABLED: true
     ports:
-      - "8080:8080"
+      - "8081:8080"
       - "8443:8443"
     command:
       - start-dev
@@ -45,4 +43,5 @@ services:
 networks:
   default:
     name: webportal-network
+    external: true
 
