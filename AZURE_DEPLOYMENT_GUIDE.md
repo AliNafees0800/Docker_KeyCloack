@@ -54,13 +54,21 @@ This guide walks you through deploying Keycloak to Azure Web App for Containers 
 
 ### Step 3: Configure Container
 
-1. **Container type**: `Single Container`
-2. **Image source**: `Docker Hub or other registries`
-3. **Access type**: `Public`
-4. **Image and tag**: `quay.io/phasetwo/phasetwo-keycloak:latest`
-5. **Continuous Deployment**: `Enable` (optional, for auto-updates when image changes)
+You're now on the **"Container"** tab. Here's what to configure:
 
-6. Click **"Next: Container"** (if available) or **"Next: Networking"**
+1. **Sidecar support**: Leave **OFF** (toggle should be grey/off position)
+   - This is for advanced scenarios, not needed for Keycloak
+
+2. **Image Source***: Select **"Other container registries"** ⚠️ **IMPORTANT**
+   - By default, "Quickstart" is selected (showing NGINX sample)
+   - You MUST change this to **"Other container registries"** to use your Keycloak image
+
+3. After selecting "Other container registries", you'll see:
+   - **Image and tag***: Enter `quay.io/phasetwo/phasetwo-keycloak:latest`
+   - **Continuous Deployment**: `Enable` (optional, for auto-updates when image changes)
+   - **Access type**: `Public` (should be default)
+
+4. Click **"Next: Networking"**
 
 ---
 

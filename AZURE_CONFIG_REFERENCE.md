@@ -1,8 +1,25 @@
 # Azure Configuration Reference - Quick Copy/Paste Values
 
-## PostgreSQL Connection String Format
+## Quick Setup Guide
 
-When configuring Keycloak Container App, use these exact environment variable values:
+This reference is for deploying Keycloak using **Web App for Containers** with **integrated PostgreSQL database** (created through the Web App wizard).
+
+---
+
+## Database Configuration in Wizard
+
+When you're on the **"Database"** tab in the Web App creation wizard:
+
+- ✅ **Check "Create a Database"**
+- **Engine**: `PostgreSQL - Flexible Server`
+- **Server name**: `keycloak-postgres-{your-unique-id}` (lowercase, alphanumeric, hyphens only)
+- **Database name**: `keycloak`
+
+---
+
+## Environment Variables for Web App
+
+After deployment, add these in **Web App → Configuration → Application settings**:
 
 ### Required Environment Variables
 
@@ -10,7 +27,7 @@ When configuring Keycloak Container App, use these exact environment variable va
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=<choose-a-secure-password>
 KC_DB=postgres
-KC_DB_URL=jdbc:postgresql://<SERVER-NAME>:5432/keycloak?sslmode=require
+KC_DB_URL=jdbc:postgresql://<SERVER-NAME>.postgres.database.azure.com:5432/keycloak?sslmode=require
 KC_DB_USERNAME=postgres@<SERVER-NAME>
 KC_DB_PASSWORD=<your-postgres-password>
 KC_DB_SCHEMA=public
@@ -40,51 +57,134 @@ KC_HEALTH_ENABLED=true
 KC_METRICS_ENABLED=true
 ```
 
+---
+
 ## Important Notes
 
-1. **PostgreSQL Username Format**: Azure requires `username@servername` format
-   - If your server is `keycloak-postgres-12345`
-   - Username should be: `postgres@keycloak-postgres-12345`
+### 1. PostgreSQL Username Format
+Azure requires `username@servername` format:
+- If your server is `keycloak-postgres-12345`
+- Username should be: `postgres@keycloak-postgres-12345`
+- **Note**: Use the server name WITHOUT the `.postgres.database.azure.com` suffix
 
-2. **SSL Mode**: Use `?sslmode=require` in the JDBC URL for secure connections
+### 2. Server Name in Connection String
+- **In JDBC URL**: Use full FQDN: `keycloak-postgres-12345.postgres.database.azure.com`
+- **In Username**: Use short name: `postgres@keycloak-postgres-12345`
 
-3. **Container Command**: 
-   - For **production**: Use `start` (not `start-dev`)
-   - For **development**: Use `start-dev`
-   - **Container Apps**: Set in container configuration under "Command" field
-   - **Web App for Containers**: Set in Configuration → General settings → Startup Command (optional, defaults to image CMD)
+### 3. SSL Mode
+Always use `?sslmode=require` in the JDBC URL for secure connections to Azure PostgreSQL.
 
-4. **Port**: 
-   - **Container Apps**: Uses port `8080` (not 8081 like your local setup)
-   - **Web App for Containers**: Uses port `8080` automatically (configured via WEBSITES_PORT if needed)
+### 4. Container Command
+- The container image defaults to production mode
+- If you need development mode, you can add a startup command in **Configuration → General settings → Startup Command**: `start-dev`
+- For production, no command needed (uses default `start`)
 
-## Container App Settings Summary
+### 5. Port Configuration
+- Web App for Containers automatically uses port `8080`
+- No manual port configuration needed
+- The container exposes port 8080, and Azure App Service handles the routing
 
+---
+
+## Web App for Containers Settings
+
+### Container Configuration
 - **Image**: `quay.io/phasetwo/phasetwo-keycloak:latest`
-- **CPU**: Minimum `1.0` (recommend `2.0` for production)
-- **Memory**: Minimum `2.0 Gi` (recommend `4.0 Gi` for production)
-- **Target Port**: `8080`
-- **Ingress**: Enabled, Accepting traffic from anywhere (or restrict as needed)
+- **Container type**: `Single Container`
+- **Image source**: `Docker Hub or other registries`
+- **Access type**: `Public`
 
-## Web App for Containers Settings Summary
+### App Service Plan
+- **Dev/Test**: `Basic B1` (1 core, 1.75 GB RAM)
+- **Production**: `Standard S1` or higher (1 core, 1.75 GB RAM minimum)
 
-- **Image**: `quay.io/phasetwo/phasetwo-keycloak:latest`
-- **Publish**: `Container`
-- **Operating System**: `Linux`
-- **App Service Plan**: 
-  - **Dev**: `Basic B1` (1 core, 1.75 GB RAM)
-  - **Production**: `Standard S1` or higher (1 core, 1.75 GB RAM minimum)
-- **Always On**: `On` (required to prevent app from sleeping)
-- **Port**: `8080` (automatically configured)
-- **Environment Variables**: Add in Configuration → Application settings
-- **URL Format**: `https://your-app-name.azurewebsites.net`
+### General Settings (Important!)
+- **Always On**: `On` ⚠️ **CRITICAL** - Prevents app from sleeping
+- **HTTP version**: `2.0` (recommended)
+- **ARR affinity**: `On` (for session persistence)
 
-## PostgreSQL Settings Summary
+### URL Format
+- Your app will be accessible at: `https://your-app-name.azurewebsites.net`
 
-- **Server Type**: Flexible Server
-- **Version**: PostgreSQL 15 or 16
-- **Compute**: Burstable B1ms (dev) or General Purpose (production)
-- **Storage**: 32 GB minimum
-- **Database Name**: `keycloak`
-- **Firewall**: Allow Azure services (0.0.0.0 - 0.0.0.0) or use Private Endpoint
+---
 
+## PostgreSQL Settings (Auto-Configured)
+
+When you create the database through the Web App wizard:
+
+- **Server Type**: Flexible Server (automatically selected)
+- **Version**: Latest PostgreSQL version
+- **Database Name**: `keycloak` (or what you specified)
+- **Firewall**: Azure services access should be automatically configured
+- **SSL**: Enabled by default (use `sslmode=require` in connection string)
+
+### Getting Database Password
+
+If you need to find or reset the PostgreSQL password:
+
+1. Go to your **PostgreSQL server** in Azure Portal
+2. Navigate to **"Settings"** → **"Connection security"** or **"Reset password"**
+3. You can reset the password if needed
+4. Update the `KC_DB_PASSWORD` environment variable in your Web App after resetting
+
+---
+
+## Troubleshooting Connection Issues
+
+### Can't Connect to Database?
+
+1. **Check Firewall Rules**:
+   - Go to PostgreSQL server → **"Networking"** or **"Connection security"**
+   - Ensure **"Allow Azure services and resources"** is set to `Yes`
+
+2. **Verify Connection String**:
+   - Check `KC_DB_URL` has correct server name (with full domain)
+   - Check `KC_DB_USERNAME` has correct format (`postgres@servername`)
+   - Verify `KC_DB_PASSWORD` is correct
+
+3. **Check Logs**:
+   - Go to Web App → **"Log stream"** to see real-time errors
+   - Look for database connection errors
+
+### Container Won't Start?
+
+1. **Check Environment Variables**:
+   - Ensure all required variables are set
+   - Check for typos in variable names
+   - Verify no extra spaces in values
+
+2. **Check Always On**:
+   - Go to **Configuration → General settings**
+   - Ensure **Always On** is set to `On`
+
+3. **View Logs**:
+   - Check **"Log stream"** for startup errors
+   - Review **"Diagnose and solve problems"** in Web App
+
+---
+
+## Security Checklist
+
+- [ ] Changed default Keycloak admin password
+- [ ] Changed PostgreSQL admin password (if using default)
+- [ ] Enabled **Always On** in Web App settings
+- [ ] Verified PostgreSQL firewall allows only Azure services
+- [ ] Using SSL for database connection (`sslmode=require`)
+- [ ] Set up custom domain with SSL certificate
+- [ ] Enabled Application Insights for monitoring (optional but recommended)
+
+---
+
+## Cost Estimation (Approximate)
+
+### Development/Testing
+- **App Service Plan (Basic B1)**: ~$13/month
+- **PostgreSQL Flexible Server (Burstable B1ms)**: ~$12/month
+- **Total**: ~$25/month
+
+### Production
+- **App Service Plan (Standard S1)**: ~$70/month
+- **PostgreSQL Flexible Server (General Purpose)**: ~$100+/month
+- **Total**: ~$170+/month
+
+*Prices vary by region and are subject to change. Check Azure pricing calculator for current rates.*
