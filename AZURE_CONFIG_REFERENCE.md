@@ -51,9 +51,12 @@ KC_METRICS_ENABLED=true
 3. **Container Command**: 
    - For **production**: Use `start` (not `start-dev`)
    - For **development**: Use `start-dev`
-   - In Azure Container Apps, you can set this in the container configuration under "Command" field
+   - **Container Apps**: Set in container configuration under "Command" field
+   - **Web App for Containers**: Set in Configuration → General settings → Startup Command (optional, defaults to image CMD)
 
-4. **Port**: Container Apps uses port `8080` (not 8081 like your local setup)
+4. **Port**: 
+   - **Container Apps**: Uses port `8080` (not 8081 like your local setup)
+   - **Web App for Containers**: Uses port `8080` automatically (configured via WEBSITES_PORT if needed)
 
 ## Container App Settings Summary
 
@@ -62,6 +65,19 @@ KC_METRICS_ENABLED=true
 - **Memory**: Minimum `2.0 Gi` (recommend `4.0 Gi` for production)
 - **Target Port**: `8080`
 - **Ingress**: Enabled, Accepting traffic from anywhere (or restrict as needed)
+
+## Web App for Containers Settings Summary
+
+- **Image**: `quay.io/phasetwo/phasetwo-keycloak:latest`
+- **Publish**: `Container`
+- **Operating System**: `Linux`
+- **App Service Plan**: 
+  - **Dev**: `Basic B1` (1 core, 1.75 GB RAM)
+  - **Production**: `Standard S1` or higher (1 core, 1.75 GB RAM minimum)
+- **Always On**: `On` (required to prevent app from sleeping)
+- **Port**: `8080` (automatically configured)
+- **Environment Variables**: Add in Configuration → Application settings
+- **URL Format**: `https://your-app-name.azurewebsites.net`
 
 ## PostgreSQL Settings Summary
 

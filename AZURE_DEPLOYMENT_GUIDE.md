@@ -213,6 +213,108 @@ This guide walks you through deploying Keycloak to Azure Container Apps with Azu
 
 ---
 
+## Alternative Option: Web App for Containers (Recommended Alternative)
+
+**Web App for Containers** is part of Azure App Service and is an excellent alternative to Container Apps. It offers:
+- ✅ Built-in CI/CD integration
+- ✅ Deployment slots (staging/production)
+- ✅ Easy SSL certificate management
+- ✅ More mature and feature-rich platform
+- ✅ Better integration with other Azure services
+
+### Deploy Keycloak using Web App for Containers
+
+#### Step 1: Create Web App
+1. **Navigate to Azure Portal** → Search for **"Web App for Containers"**
+2. Click **"Create"**
+3. Fill in **Basics** tab:
+   - **Subscription**: Select your subscription
+   - **Resource Group**: Same as PostgreSQL (e.g., `keycloak-rg`)
+   - **Name**: `keycloak-app-{unique-id}` (must be globally unique, lowercase, alphanumeric)
+   - **Publish**: `Container`
+   - **Operating System**: `Linux`
+   - **Region**: Same as PostgreSQL
+   - **App Service Plan**: 
+     - Click **"Create new"** or select existing
+     - **Name**: `keycloak-plan`
+     - **Pricing tier**: `Basic B1` (1 core, 1.75 GB RAM) for dev, or `Standard S1` for production
+     - **Sku and size**: Select appropriate tier
+   - **Zone redundancy**: `Disabled` (for dev)
+
+4. Click **"Next: Deployment"**
+
+#### Step 2: Configure Container
+1. **Container type**: `Single Container`
+2. **Image source**: `Docker Hub or other registries`
+3. **Access type**: `Public`
+4. **Image and tag**: `quay.io/phasetwo/phasetwo-keycloak:latest`
+5. **Continuous Deployment**: `Enable` (optional, for auto-updates)
+6. Click **"Next: Networking"**
+
+#### Step 3: Networking (Optional)
+1. Configure VNet integration if needed (for private endpoints)
+2. Click **"Next: Monitoring"**
+
+#### Step 4: Monitoring (Optional)
+1. Enable Application Insights if desired
+2. Click **"Next: Tags"** → **"Review + create"** → **"Create"**
+3. Wait for deployment (3-5 minutes)
+
+#### Step 5: Configure Environment Variables
+1. Once deployed, go to your **Web App**
+2. Navigate to **"Configuration"** in the left menu
+3. Click **"+ New application setting"** and add each environment variable:
+
+   ```
+   KEYCLOAK_ADMIN = admin
+   KEYCLOAK_ADMIN_PASSWORD = <your-secure-password>
+   KC_DB = postgres
+   KC_DB_URL = jdbc:postgresql://<your-postgres-server-name>:5432/keycloak?sslmode=require
+   KC_DB_USERNAME = postgres@<your-postgres-server-name>
+   KC_DB_PASSWORD = <your-postgres-password>
+   KC_DB_SCHEMA = public
+   KC_HOSTNAME_STRICT = false
+   KC_HOSTNAME_STRICT_HTTPS = false
+   KC_HTTP_ENABLED = true
+   KC_PROXY = edge
+   KC_HEALTH_ENABLED = true
+   KC_METRICS_ENABLED = true
+   ```
+
+4. Click **"Save"** (this will restart the app)
+
+#### Step 6: Configure Port (Important!)
+1. In your **Web App**, go to **"Configuration"**
+2. Click on **"General settings"** tab
+3. Set **"Always On"**: `On` (prevents app from sleeping)
+4. Set **"HTTP version"**: `2.0` (recommended)
+5. Click **"Save"**
+
+#### Step 7: Access Your App
+1. Go to **"Overview"** in your Web App
+2. Copy the **URL** (e.g., `https://keycloak-app-12345.azurewebsites.net`)
+3. Access Keycloak at this URL
+
+### Web App for Containers vs Container Apps
+
+| Feature | Web App for Containers | Container Apps |
+|---------|----------------------|----------------|
+| **Maturity** | More mature, established | Newer service |
+| **Deployment Slots** | ✅ Yes (staging/production) | ❌ No |
+| **CI/CD Integration** | ✅ Excellent | ✅ Good |
+| **SSL Certificates** | ✅ Easy management | ✅ Available |
+| **Scaling** | ✅ Auto-scaling available | ✅ Auto-scaling |
+| **Cost** | Pay per App Service Plan | Pay per usage |
+| **Best For** | Traditional web apps, production | Microservices, serverless |
+
+**Recommendation**: Use **Web App for Containers** if you want:
+- Deployment slots for staging
+- Easier SSL certificate management
+- More traditional web app hosting experience
+- Better integration with Azure DevOps
+
+---
+
 ## Alternative: Using Azure Container Instances (Simpler but less scalable)
 
 If you prefer a simpler setup without scaling features:
@@ -224,7 +326,7 @@ If you prefer a simpler setup without scaling features:
 5. Configure networking
 6. Deploy
 
-**Note**: Container Apps is recommended for better scalability and features.
+**Note**: Container Apps or Web App for Containers are recommended for better scalability and features.
 
 ---
 
@@ -232,9 +334,15 @@ If you prefer a simpler setup without scaling features:
 
 You now have:
 - ✅ Azure Database for PostgreSQL (managed service)
-- ✅ Keycloak running on Azure Container Apps (serverless containers)
+- ✅ Keycloak running on Azure (choose one):
+  - **Azure Container Apps** (serverless containers) - See Part 2
+  - **Web App for Containers** (App Service) - See Alternative Option section
 - ✅ Public access to Keycloak
 - ✅ All configured through Azure Portal
+
+**Which option to choose?**
+- **Web App for Containers**: Better for traditional web apps, deployment slots, easier SSL management
+- **Container Apps**: Better for microservices, serverless architecture, event-driven scaling
 
 **Next Steps**:
 - Configure your Keycloak realm
