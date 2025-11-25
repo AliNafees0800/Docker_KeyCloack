@@ -80,6 +80,24 @@ Click on the **Create** button to start the setup process.
 
 ---
 
+## Step 6: Connect and Create Database
+
+### After Server Creation
+- Once the VM/server is created, **open the resource** in Azure Portal
+- Click on **Command Connect from VS Code**
+
+### Connect via VS Code
+- VS Code will open automatically
+- The connection will provide the **host** information
+- Use the **username** and **password** that were added in **Step 2** (Administrator login credentials)
+- **Login** to the PostgreSQL server
+
+### Create Database
+- After successful login, add a database with the name **keycloak**
+- That's it! The database is now ready to use
+
+---
+
 ## Notes
 
 - Ensure you have the necessary permissions in your Azure subscription
