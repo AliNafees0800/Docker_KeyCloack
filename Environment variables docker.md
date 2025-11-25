@@ -16,11 +16,6 @@ Following environment variables need to be set
 
 [
   {
-    "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
-    "value": "",
-    "slotSetting": false
-  },
-  {
     "name": "DOCKER_REGISTRY_SERVER_URL",
     "value": "https://quay.io",
     "slotSetting": false
@@ -31,23 +26,18 @@ Following environment variables need to be set
     "slotSetting": false
   },
   {
+    "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+    "value": "",
+    "slotSetting": false
+  },
+  {
     "name": "KC_DB",
     "value": "postgres",
     "slotSetting": false
   },
   {
-    "name": "KC_DB_PASSWORD",
-    "value": "Nafees012!",
-    "slotSetting": false
-  },
-  {
-    "name": "KC_DB_SCHEMA",
-    "value": "public",
-    "slotSetting": false
-  },
-  {
     "name": "KC_DB_URL",
-    "value": "jdbc:postgresql://key-cloack-server.postgres.database.azure.com:5432/keycloak",
+    "value": "jdbc:postgresql://pgsql-keycloak.postgres.database.azure.com:5432/keycloak",
     "slotSetting": false
   },
   {
@@ -61,18 +51,43 @@ Following environment variables need to be set
     "slotSetting": false
   },
   {
-    "name": "KC_HEALTH_ENABLED",
-    "value": "true",
+    "name": "KC_DB_PASSWORD",
+    "value": "Nafees012!",
+    "slotSetting": false
+  },
+  {
+    "name": "KC_DB_SCHEMA",
+    "value": "public",
+    "slotSetting": false
+  },
+  {
+    "name": "KEYCLOAK_ADMIN",
+    "value": "admin",
+    "slotSetting": false
+  },
+  {
+    "name": "KEYCLOAK_ADMIN_PASSWORD",
+    "value": "admin",
+    "slotSetting": false
+  },
+  {
+    "name": "KC_LOG_LEVEL",
+    "value": "DEBUG",
+    "slotSetting": false
+  },
+  {
+    "name": "KC_PROXY",
+    "value": "edge",
     "slotSetting": false
   },
   {
     "name": "KC_HOSTNAME",
-    "value": "https://wpdev-keycloack-budxfqh6cne6ezg4.canadacentral-01.azurewebsites.net",
+    "value": "https://wpdev-key-cloak-cbfxdedmbbc4dcac.canadacentral-01.azurewebsites.net",
     "slotSetting": false
   },
   {
     "name": "KC_HOSTNAME_ADMIN",
-    "value": "https://wpdev-keycloack-budxfqh6cne6ezg4.canadacentral-01.azurewebsites.net",
+    "value": "https://wpdev-key-cloak-cbfxdedmbbc4dcac.canadacentral-01.azurewebsites.net",
     "slotSetting": false
   },
   {
@@ -96,8 +111,8 @@ Following environment variables need to be set
     "slotSetting": false
   },
   {
-    "name": "KC_LOG_LEVEL",
-    "value": "DEBUG",
+    "name": "KC_HEALTH_ENABLED",
+    "value": "true",
     "slotSetting": false
   },
   {
@@ -106,24 +121,11 @@ Following environment variables need to be set
     "slotSetting": false
   },
   {
-    "name": "KC_PROXY",
-    "value": "edge",
-    "slotSetting": false
-  },
-  {
-    "name": "KEYCLOAK_ADMIN",
-    "value": "admin",
-    "slotSetting": false
-  },
-  {
-    "name": "KEYCLOAK_ADMIN_PASSWORD",
-    "value": "admin",
-    "slotSetting": false
-  },
-  {
     "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
     "value": "false",
     "slotSetting": false
   }
 ]
+
+
 

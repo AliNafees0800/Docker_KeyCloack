@@ -127,3 +127,4 @@ KC_METRICS_ENABLED=true
 - `KEYCLOAK_ADMIN_PASSWORD` from `admin` to a strong password
 - `KC_DB_PASSWORD` from `123` to a strong password
 
+
